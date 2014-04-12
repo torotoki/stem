@@ -1,12 +1,15 @@
 import operator, os, pickle, sys
 
 import cherrypy
-
+from stem import Stem
 
 class Root(object):
 
     def __init__(self, data):
         self.data = data
+        self.calc = Stem()
+        self.calc.add_folder("/works/csisv13/torotoki/data/train_line/json")
+        self.calc.init()
 
     @cherrypy.expose
     def index(self):
