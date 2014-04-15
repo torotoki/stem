@@ -16,7 +16,7 @@ class Root(object):
         return 'Geddit'
 
 
-def main(filename):
+def main():
     data = {} # We'll replace this later
 
     # Some global configuration; note that this could be moved into a
@@ -36,4 +36,4 @@ def main(filename):
     })
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main()
