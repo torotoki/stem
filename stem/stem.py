@@ -8,7 +8,9 @@ import json
 import numpy as np
 from scipy import io, sparse
 import datetime
+import copy
 from collections import defaultdict
+from queue import PriorityQueue
 
 class Train:
     def __init__(self, line_name, provided_company, joining_line):
@@ -116,6 +118,9 @@ class Stem:
                     # Genneraly case
                     vertex[node.id, nnode.id] = self.time_minus(nnode.arrival_time, node.arrival_time)
 
+                if vertex[node.id, nnode.id] == 0:
+                    vertex[nnode.id, node.id] = 0
+
         return vertex
 
 
@@ -141,7 +146,7 @@ class Stem:
 
         # Initializing instant variables for discriminative memory
         self.train_nodes_buffer = None
-        self.station_nodes_buffer = None
+        # self.station_nodes_buffer = None
 
         self.is_loaded = True
 
@@ -212,3 +217,34 @@ class Stem:
             self.add_file(folder +'/'+ f_name)
         if then_init:
             self.init()
+
+    def nearest_node(self, station_name, time):
+        if not self.is_loaded:
+            raise "Please init before calling this function"
+
+        station = self._to_station(station_name)
+        nearest_node = None
+        nearest_diff = 1000
+        for node in self.station_nodes_buffer[station]:
+            if node.departure_time:
+                diff = self.time_minus(node.departure_time, time)
+            else:
+                diff = self.time_minus(node.arrival_time, time)
+
+            if diff < nearest_diff and diff >= 0:
+                nearest_node = node
+        return nearest_node
+
+    def shortest_path(self, start_node, end_station_name):
+        if not self.is_loaded:
+            raise "Please init before calling this function"
+
+        end_station = self._to_station(end_station_name)
+        prev = np.zeros(len(self.nodes))
+        Q = self.vertex.copy()
+        nearest_node_id = Q[start_node.id].argmin
+        neighbor_nodes = Q[start_node.id].nonzero()
+        for u in neighbor_nodes:
+            if prev[u.id] == 0:
+                prev[u.id] = Q[start_node.id, u.id]
+                Q[start_node.id, u] = 0  # Exclude u from Q
