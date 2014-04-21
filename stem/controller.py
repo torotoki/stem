@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import operator, os, pickle, sys
 
 import cherrypy
@@ -7,9 +10,15 @@ class Root(object):
 
     def __init__(self, data):
         self.data = data
-        self.calc = Stem()
+        # self.calc = Stem()
+        self.calc = Stem(cache='matrix_cache')
         self.calc.add_folder("/works/csisv13/torotoki/data/train_line/json")
-        self.calc.init()
+
+        # Following are used for testing stem
+        import datetime
+        start_time = datetime.time(12, 30)
+        A = self.calc.nearest_node(u"自由が丘", start_time)
+        print self.calc.shortest_path(A, u"渋谷")
 
     @cherrypy.expose
     def index(self):
