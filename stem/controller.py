@@ -18,7 +18,8 @@ class Root(object):
         import datetime
         start_time = datetime.time(12, 30)
         A = self.calc.nearest_node(u"自由が丘", start_time)
-        print self.calc.shortest_path(A, u"渋谷")
+        self.calc.shortest_path(A, u"渋谷")
+        print "FINISHED"
 
     @cherrypy.expose
     def index(self):

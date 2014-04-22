@@ -18,13 +18,13 @@ from pdict import priority_dict
 MAX_DISTANT = 10000
 
 class Train:
-    def __init__(self, id, line_name, provided_company, joining_line):
+    def __init__(self, id, line_name, provided_company, joining_line, schedule):
         self.id = id
         self.line_name = line_name
         self.provided_company = provided_company
         self.joining_line = joining_line
 
-        # self.schedule = ""
+        self.schedule = schedule
         # self.other_info = ""
 
         self.train_number = 0
@@ -72,8 +72,8 @@ class Stem:
         self.nodes = []
         self.is_loaded = False
         self.station_nodes = []
-        self.station_nodes_buffer = defaultdict(list)
-        self.train_nodes_buffer = defaultdict(list)
+        self.station_nodes_buffer = defaultdict(list)  # Map station id to that nodes
+        self.train_nodes_buffer = defaultdict(list)    # Map train id to that nodes
         self.cache = cache
         # self.vertex = np.array(len(self.nodes), len(self.nodes))
 
@@ -82,6 +82,12 @@ class Stem:
         dummydate = datetime.date(2000, 1, 1)
         diff = datetime.datetime.combine(dummydate, t1) - datetime.datetime.combine(dummydate, t2)
         return diff.seconds // 60
+
+    def or_times(self, t1, t2):
+        if t1 is not None:
+            return t1
+        else:
+            return t2
 
     def build_vertex(self, train_nodes, station_nodes, nodes):
 
@@ -108,61 +114,32 @@ class Stem:
                 vertex[node.id, nnode.id] = diff
 
         # Same station nodes
-        for i, loose_station in enumerate(station_nodes.values()):
+        for loose_station in station_nodes.values():
             prevs = []
-            station = sorted(loose_station, key=lambda x: x.arrival_time or x.departure_time)
-            for j, node in enumerate(station):
+            station = sorted(loose_station, key=lambda x: self.or_times(x.arrival_time, x.departure_time))
+            for node in station:
+                if node.id == 242465:
+                    pass
                 # ### ノードが分けられていないため近似計算
                 # for prev in prevs[-3:]:
-                if prevs:
+                if prevs != []:
                     prev = prevs[-1]
-                    if not prev.arrival_time:
-                        p_arrival_time = prev.departure_time
-                    else:
-                        p_arrival_time = prev.arrival_time
-                    if not node.departure_time:
-                        n_departure_time = node.arrival_time
-                    else:
-                        n_departure_time = node.departure_time
-                    if not node.arrival_time:
-                        n_arrival_time = node.departure_time
-                    else:
-                        n_arrival_time = node.arrival_time
+                    p_arrival_time = self.or_times(prev.arrival_time, prev.departure_time)
+                    n_departure_time = self.or_times(node.departure_time, node.arrival_time)
+                    n_arrival_time = self.or_times(node.arrival_time, node.departure_time)
                     if not n_departure_time >= p_arrival_time >= n_arrival_time:
                         # To wait in this station
-                        diff = self.time_minus(node.arrival_time or node.departure_time,
-                                               prev.arrival_time or prev.departure_time)
+                        diff = self.time_minus(
+                            self.or_times(node.arrival_time,
+                                          node.departure_time),
+                            self.or_times(prev.arrival_time,
+                                          prev.departure_time))
                         vertex[prev.id, node.id] = diff
                     else:
                         # To exchange to another one in this station
                         vertex[prev.id, node.id] = -1
                         vertex[node.id, prev.id] = -1
 
-
-                # nnode = station[j+1]
-                # # vertex[node.id][nnode.id] = nnode.departure_time - node.arrival_time
-                # ### ノードが分けられていないため近似計算
-
-                # if node.arrival_time is None and nnode.arrival_time is None:
-                #     diff = self.time_minus(nnode.departure_time, node.departure_time)
-                # elif node.arrival_time is None:
-                #     # 最初の駅
-                #     diff = self.time_minus(nnode.arrival_time, node.departure_time)
-                # elif nnode.arrival_time is None:
-                #     # 次が終点の駅
-                #     diff = self.time_minus(nnode.departure_time, node.arrival_time)
-
-                # else:
-                #     # Genneraly case
-                #     diff = self.time_minus(nnode.arrival_time, node.arrival_time)
-
-                # if diff == 0:
-                #     # not good solution
-                #     vertex[node.id, nnode.id] = -1
-                #     vertex[nnode.id, node.id] = -1
-                # else:
-                #     vertex[node.id, nnode.id] = diff
-                #     vertex[nnode.id, node.id] = diff
                 prevs.append(node)
 
         return vertex
@@ -187,6 +164,7 @@ class Stem:
             # station.set_id(i)
 
         if self.cache is None:
+            print "Building vertex"
             self.vertex = self.build_vertex(self.train_nodes_buffer, self.station_nodes_buffer, self.nodes)
             io.savemat('matrix_cache', {'vertex':self.vertex})
             print "made cache file, you should use it"
@@ -195,17 +173,17 @@ class Stem:
 
         self.vertex = self.vertex.tocsr()
 
-        # Initializing instant variables for discriminative memory
-        # self.train_nodes_buffer = None
-        # self.station_nodes_buffer = None
-
         self.is_loaded = True
 
         print "nodes: %s" % len(self.nodes)
         print "stations: %s" % N
+        print "trains: %s" % len(self.train_nodes_buffer)
         print "station and node: %s * %s" % (N, MAX_M)
         print "vertex: %s * %s" % (len(self.nodes), len(self.nodes))
-        # print self.vertex
+
+        # Initializing instant variables for discriminative memory
+        # self.train_nodes_buffer = None
+        # self.station_nodes_buffer = None
 
     def _to_station(self, name):
         # TODO: If same name stations, following code cannot convert
@@ -221,21 +199,12 @@ class Stem:
             return new_station
 
     def decode_time(self, raw_time):
-        if raw_time != "":
-            (hour, minute) = raw_time.split(':')
+        processing_time = re.sub("\(|\)", "", raw_time)
+        if processing_time != "":
+            (hour, minute) = processing_time.split(':')
             return datetime.time(int(hour), int(minute), 0)
         else:
             return None
-
-    def overlup(self, lis):
-        r = []
-        def func(x, y):
-            if x == y and x not in r:
-                r.append(x)
-            return y
-        reduce(func, lis)
-        return r
-
 
     def add_file(self, f_name):
         f = open(f_name)
@@ -243,14 +212,20 @@ class Stem:
         train_data = json.load(f)
         f.close()
 
-        new_id = len(self.train_nodes_buffer.keys())
+        new_tid = len(self.train_nodes_buffer)
         train_name = train_data['train_name']
         provided_company = train_data['company'] or ""
-        # other_info = train_data['other_info']
         joining_line = train_data['joining_line']
-        train = Train(new_id, train_name, provided_company, joining_line)
+        train_type = train_data['train_type']
+        schedule = train_data['schedule']
+        # train_number = train_data['train_number']
+        # other_info = train_data['other_info']
 
-        prev_node = None
+        if schedule == u"《臨時運転》":
+            return
+
+        train = Train(new_tid, train_name, provided_company, joining_line, schedule)
+
         for node_info in train_data['time_table']:
             if node_info[3] == True:
                 # print "This station has skip tag"
@@ -261,32 +236,23 @@ class Stem:
             raw_departure_time = node_info[2]
 
             # station = Station(station_name)
-            station = self._to_station(station_name)
+            new_id = len(self.nodes)
+            station = self._to_station(station_name.strip())
             departure_time = self.decode_time(raw_departure_time)
             arrival_time = self.decode_time(raw_arrival_time)
 
-            new_id = len(self.nodes)  # ID for each node
-            for i in (set(self.train_nodes_buffer[train]) &
-                      set(self.station_nodes_buffer[station])):
-                if i.departure_time == departure_time and i.arrival_time == arrival_time:
-                    already_contained_flag = True
-                    # existed_node =
-                    break
-            else:
-                already_contained_flag = False
-
-            if not already_contained_flag:
-                new_node = Node(new_id, train, station, departure_time, arrival_time)
-                self.station_nodes_buffer[station].append(new_node)
-                self.train_nodes_buffer[train].append(new_node)
-                self.nodes.append(new_node)
-                # self.vertex.append([0, 0, 0, ..., from, 0])
+            new_node = Node(new_id, train, station, departure_time, arrival_time)
+            self.station_nodes_buffer[station.id].append(new_node)
+            self.train_nodes_buffer[new_tid].append(new_node)
+            self.nodes.append(new_node)
+            # self.vertex.append([0, 0, 0, ..., from, 0])
 
 
     def add_folder(self, folder, then_init=True):
         for f_name in os.listdir(folder):
             self.add_file(folder +'/'+ f_name)
         if then_init:
+            print "Added all files"
             self.init()
 
     def nearest_node(self, station_name, time):
@@ -296,7 +262,7 @@ class Stem:
         station = self._to_station(station_name)
         nearest_node = None
         nearest_diff = 1000
-        for node in self.station_nodes_buffer[station]:
+        for node in self.station_nodes_buffer[station.id]:
             if node.departure_time:
                 diff = self.time_minus(node.departure_time, time)
             else:
@@ -304,6 +270,7 @@ class Stem:
 
             if diff < nearest_diff and diff >= 0:
                 nearest_node = node
+                nearest_diff = diff
         return nearest_node
 
     def shortest_path(self, start_node, end_station_name):
@@ -381,7 +348,7 @@ class Stem:
 
                 alt = dist[u] + length_uv
                 if alt < dist[v]:
-                    print v, self.nodes[v].station.name, self.nodes[v].arrival_time, self.nodes[v].departure_time, self.nodes[v].train.line_name, alt, len(np.nonzero(self.vertex[u])[1])
+                    print v, self.nodes[v].station.name, self.nodes[v].arrival_time, self.nodes[v].departure_time, self.nodes[v].train.line_name, alt, self.nodes[v].train.id
                     if self.nodes[v].station.name == u"武蔵小杉":
                         pass
                     dist[v] = alt
