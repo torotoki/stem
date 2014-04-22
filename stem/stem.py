@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# TODO: 乗り換えがうまく扱えていない
-
 import os
 import sys
 import re
@@ -12,7 +10,6 @@ from scipy import io, sparse
 import datetime
 import copy
 from collections import defaultdict
-from heapq import heappush, heappop, heapify
 from pdict import priority_dict
 
 MAX_DISTANT = 10000
