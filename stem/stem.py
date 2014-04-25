@@ -242,12 +242,13 @@ class Stem:
             self.station_nodes_buffer[station.id].append(new_node)
             self.train_nodes_buffer[new_tid].append(new_node)
             self.nodes.append(new_node)
-            # self.vertex.append([0, 0, 0, ..., from, 0])
 
 
     def add_folder(self, folder, then_init=True):
         for f_name in os.listdir(folder):
-            self.add_file(folder +'/'+ f_name)
+            path = folder + '/' + f_name
+            if os.path.isfile(path):
+                self.add_file(path)
         if then_init:
             print "Added all files"
             self.init()
@@ -260,7 +261,7 @@ class Stem:
         nearest_node = None
         nearest_diff = 1000
         for node in self.station_nodes_buffer[station.id]:
-            if node.departure_time:
+            if node.departure_time is not None:
                 diff = self.time_minus(node.departure_time, time)
             else:
                 diff = self.time_minus(node.arrival_time, time)
@@ -346,8 +347,6 @@ class Stem:
                 alt = dist[u] + length_uv
                 if alt < dist[v]:
                     print v, self.nodes[v].station.name, self.nodes[v].arrival_time, self.nodes[v].departure_time, self.nodes[v].train.line_name, alt, self.nodes[v].train.id
-                    if self.nodes[v].station.name == u"武蔵小杉":
-                        pass
                     dist[v] = alt
                     prev[v] = u
                     Q[v] = alt
