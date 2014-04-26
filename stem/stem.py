@@ -88,7 +88,6 @@ class Stem:
 
     def build_vertex(self, train_nodes, station_nodes, nodes):
 
-        # vertex = np.zeros((len(nodes), len(nodes)))
         vertex = sparse.lil_matrix((len(nodes), len(nodes)), dtype=int)
 
         # Same train nodes
@@ -96,11 +95,7 @@ class Stem:
             for j, node in enumerate(train):
                 if j == len(train)-1:
                     continue  # last element is skipped
-                # if not node.departure_time:
-                #     print "node.departure_time is None: %s:%s" % (i, j)
-                #     continue
                 nnode = train[j+1]
-                # vertex[node.id][nnode.id] = nnode.arrival_time - node.departure_time
                 if j != 0:
                     diff = self.time_minus(nnode.arrival_time, node.arrival_time)
                 else:
@@ -146,19 +141,9 @@ class Stem:
         """
         This function is called after loaded all files.
         """
-        # self.vertex = np.array(len(self.nodes), len(self.nodes))
 
         N = len(set(self.name2station.values()))
         MAX_M = max([len(j) for i,j in self.station_nodes_buffer.items()])
-
-        # self.station_nodes = defaultdict(list)
-        # for (i, station) in enumerate(self.station_nodes_buffer.keys()):
-        #     for (j, node) in enumerate(self.station_nodes_buffer[station]):
-        #         # TODO: ここら辺はまだ擬似コード
-        #         self.station_nodes[i].append(node)
-
-            #     node.set_id(j)
-            # station.set_id(i)
 
         if self.cache is None:
             print "Building vertex"
@@ -232,7 +217,6 @@ class Stem:
             raw_arrival_time = node_info[1]
             raw_departure_time = node_info[2]
 
-            # station = Station(station_name)
             new_id = len(self.nodes)
             station = self._to_station(station_name.strip())
             departure_time = self.decode_time(raw_departure_time)
@@ -271,71 +255,34 @@ class Stem:
                 nearest_diff = diff
         return nearest_node
 
+    def visualize_results(self, last_node, prevs, all_time):
+        current_node = last_node
+        result = []
+        while True:
+            result.append(self.nodes[current_node])
+            prev_node = prevs[current_node]
+            if prev_node == -1:
+                # This is the start node
+                return (result.reverse(), all_time)
+            current_node = prev_node
+
     def shortest_path(self, start_node, end_station_name):
         if not self.is_loaded:
             raise "Please init before calling this function"
 
         end_station = self._to_station(end_station_name)
 
-        # # Making a heap queue
-        # print "初期化"
-        # prev = [-1]*len(self.nodes)
-        # dist = [MAX_DISTANT]*len(self.nodes)
-        # dist[start_node.id] = 0
-        # # Q is a priority queue version of 'dist'
-        # Q = priority_dict({i:v for i,v in enumerate(dist)})
-
-        # ###
-
-        # dist = [MAX_DISTANT]*len(self.name2station)
-        # dist[start_node.station.id] = 0
-
-        # print "ループ"
-        # while Q:
-        #     u = Q.pop_smallest()  # argmin node
-        #     if u == MAX_DISTANT:
-        #         print "u is MAX_DISTANT"
-
-        #     for v in np.nonzero(self.vertex[u])[1]:
-        #         length_uv = self.vertex[u, v]
-        #         if length_uv == -1:  # using it instead of 0
-        #             length_uv = 0
-
-        #         alt = dist[self.nodes[u].station.id] + length_uv
-        #         if alt < dist[self.nodes[v].station.id]:
-        #             print self.nodes[v].station.name, self.nodes[v].departure_time, self.nodes[v].arrival_time, self.nodes[v].train.line_name, alt
-        #             dist[self.nodes[v].station.id] = alt
-        #             prev[v] = u
-        #             Q[v] = alt
-
-        #             if self.nodes[v].station.name == end_station_name:
-        #                 return prev
-        # else:
-        #     print "全探索したが見つからない"
-        #     return prev
-
-
         # Making a heap queue
-        print "初期化"
         prev = [-1]*len(self.nodes)
         dist = [MAX_DISTANT]*len(self.nodes)
         dist[start_node.id] = 0
         # Q is a priority queue version of 'dist'
         Q = priority_dict({i:v for i,v in enumerate(dist)})
 
-        ###
-        # N = len(self.name2station)
-        # M = len(self.train_nodes_buffer)
-        # dist = np.zeros((N, M, 2), dtype=int)
-
-        # dist = [MAX_DISTANT]*len(self.name2station)
-        # dist[start_node.station.id] = 0
-
-        print "ループ"
         while Q:
             u = Q.pop_smallest()  # argmin node
             if u == MAX_DISTANT:
-                print "u is MAX_DISTANT"
+                print "[WARNING] u is MAX_DISTANT"
 
             for v in np.nonzero(self.vertex[u])[1]:
                 raw_length_uv = self.vertex[u, v]
@@ -352,7 +299,7 @@ class Stem:
                     Q[v] = alt
 
                     if self.nodes[v].station.name == end_station_name:
-                        return prev
+                        return self.visualize_result(v, prev, alt)
         else:
             print "全探索したが見つからない"
             return prev
