@@ -34,6 +34,6 @@ print self.calc.shortest_path(A, u"新宿")
 ### Input File Format
 coming soon
 
-
 ## Known issue
+
 * The part of code reading timetable is complex codes for now, because it is not separated departure and arrival node of train
