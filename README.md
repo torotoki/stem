@@ -1,21 +1,24 @@
-最短経路問題を解くプログラムとその Web インタフェース
-使用言語は Python
-データ: /works/csisv13/torotoki/data/train_line/json
+#STEM
+Shortest Path Problem Solver for large scale graphs and timetable with Dijkstra's algorithm
 
-## 使い方
+---
 
-### キャッシュファイルの作成
+This library includes an implementation of Dijkstra's algorithm and large scale time-dependent network for timetable of train, wrote in Python.
+
+## Usage
+
+### Making cache file
 
 ```
 $ cd stem
 $ python
 from stem import Stem
 calc = Stem()
-calc.add_folder("/works/csisv13/torotoki/data/train_line/json")
+calc.add_folder("data/train_line/json")
 ```
-上記を実行すると `matrix_cache.mat` というファイルがカレントディレクトリにできる
+You have to make a cache file with below before solving a problem. The code makes a file named `matrix_cache.mat` in current directory.
 
-### 動作確認
+### Example
 
 ```
 from stem import Stem
@@ -28,6 +31,9 @@ A = self.calc.nearest_node(u"渋谷", start_time)
 print self.calc.shortest_path(A, u"新宿")
 ```
 
-## 既知の問題点
-* 電車の出発ノードと着ノードを分けていないため、コードが若干煩雑になっている
-* 休日のダイア変更、特殊なダイア変更
+### Input File Format
+coming soon
+
+
+## Known issue
+* The part of code reading timetable is complex codes for now, because it is not separated departure and arrival node of train
