@@ -19,7 +19,7 @@ You have to make a cache file with below before solving a problem. The code make
 ```
 from stem import Stem
 calc = Stem(cache='matrix_cache')
-calc.add_folder("/works/csisv13/torotoki/data/train_line/json")
+calc.add_folder("data/train_line/json")
 
 import datetime
 start_time = datetime.time(12, 30)
