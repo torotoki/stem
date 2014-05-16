@@ -1,9 +1,5 @@
 # STEM
-Shortest Path Problem Solver for large scale graphs and timetable with Dijkstra's algorithm
-
----
-
-This library includes an implementation of Dijkstra's algorithm and large scale time-dependent network for timetable of train, wrote in Python.
+This is a Shortest Path Problem Solver for large scale graphs and timetable. The library includes an implementation of Dijkstra's algorithm and large scale time-dependent network for timetable of train, wrote in Python.
 
 ## Usage
 
