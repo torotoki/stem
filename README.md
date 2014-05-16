@@ -1,4 +1,4 @@
-#STEM
+# STEM
 Shortest Path Problem Solver for large scale graphs and timetable with Dijkstra's algorithm
 
 ---
