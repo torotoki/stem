@@ -1,5 +1,5 @@
 # STEM
-This is a Shortest Path Problem Solver for large scale graphs and timetable. The library includes an implementation of Dijkstra's algorithm and large scale time-dependent network for timetable of train, wrote in Python.
+This is a python library of Shortest Path Problem Solver for large scale graphs of timetable, includes an implementation of Dijkstra's algorithm for large scale time-dependent network, written in Python.
 
 ## Usage
 
@@ -12,7 +12,7 @@ from stem import Stem
 calc = Stem()
 calc.add_folder("data/train_line/json")
 ```
-You have to make a cache file with below before solving a problem. The code makes a file named `matrix_cache.mat` in current directory.
+You have to make a cache file with below before solving a problem. The code makes a file named `matrix_cache.mat` in the current directory.
 
 ### Example
 
@@ -32,4 +32,4 @@ coming soon
 
 
 ## Known issue
-* The part of code reading timetable is complex codes for now, because it is not separated departure and arrival node of train
+* The part of code reading timetable is complex for now, because departure and arrival node of a train is not separated.
