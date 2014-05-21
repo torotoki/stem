@@ -1,5 +1,5 @@
 # STEM
-This is a python library of Shortest Path Problem Solver for large scale graphs of timetable, includes an implementation of Dijkstra's algorithm for large scale time-dependent network, written in Python.
+STEM is a python library of Shortest Path Problem Solver for large scale graphs of timetable, includes an implementation of Dijkstra's algorithm for large scale time-dependent network.
 
 ## Usage
 
@@ -32,4 +32,13 @@ coming soon
 
 
 ## Known issue
-* The part of code reading timetable is complex for now, because departure and arrival node of a train is not separated.
+* The part of code reading timetable is complex for the moment because departure node and arrival node of a train is not separated.
+
+
+## License
+
+STEM is licensed under the [GNU General Public
+License](http://www.gnu.org/licenses/gpl-2.0.html) (v2 or later).
+Note that this is the /full/ GPL, which allows many free uses, but not
+its use in distributed [proprietary
+software](http://www.gnu.org/licenses/gpl-faq.html#GPLInProprietarySystem).
